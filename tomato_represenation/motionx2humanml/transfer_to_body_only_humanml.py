@@ -47,7 +47,8 @@ if __name__ == "__main__":
     body_joints = 22
 
     # change your folder path here
-    folder_path = './new_joint_vecs'
+    # folder_path = './new_joint_vecs'
+    folder_path = 'D:\\jarondu\\Datasets\\Motion_X_one\\motion\\motion_generation\\new_joint_vecs'
 
     for file_path in findAllFile(folder_path):
         data = np.load(file_path)

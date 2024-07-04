@@ -40,7 +40,8 @@
 # Portions of this code were adapted from the following open-source project:
 # https://github.com/EricGuo5513/HumanML3D
 # ------------------------------------------------------------------------------------------------
-
+import sys
+sys.path.append("..")
 from common.quaternion import *
 import torch 
 import matplotlib.pyplot as plt
@@ -51,6 +52,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import mpl_toolkits.mplot3d.axes3d as p3
 from textwrap import wrap
 import imageio
+import argparse
 
 def recover_from_ric(data, joints_num):
     r_rot_quat, r_pos = recover_root_rot_pos(data)
@@ -148,8 +150,9 @@ def plot_3d_motion_smplh(joints, out_name, title, kinematic_chain, figsize=(10, 
         
         init()
         
-        ax.lines = []
-        ax.collections = []
+        # ax.lines = []
+        # ax.collections = []
+        ax.clear() # jaron-modify
         ax.view_init(elev=110, azim=-90)
         ax.dist = 7.5
         #         ax =
@@ -214,8 +217,14 @@ def draw_to_batch_smplh(smpl_joints_batch, kinematic_chain, title_batch=None, ou
 
 
 if __name__ == '__main__':
-    # load your own 623-dim vector file here
-    example_path = None
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--example_path", type=str, default="./new_joints/humanml/000000.npy", help="the path to load data for visulization.")
+    parser.add_argument("--output_file", type=str, default="example_vis.gif", help="the name of outputed file.")
+    
+    opt = parser.parse_args()
+
+    # load your own 263-dim vector file here
+    example_path = opt.example_path
     features = torch.from_numpy(np.load(example_path))
     global_postion = recover_from_ric(features, 22).detach().cpu().numpy()
 
@@ -226,7 +235,8 @@ if __name__ == '__main__':
     xyz = global_postion.reshape(1, -1, 22, 3)
 
     # feel free to change the output name
-    pose_vis = draw_to_batch_smplh(xyz, t2m_kinematic_chain, title_batch=None, outname=[f'output.gif'])
+    pose_vis = draw_to_batch_smplh(xyz, t2m_kinematic_chain, title_batch=None, outname=[f'{opt.output_file}'])
 
+# python plot_feature_body.py --example_path "D:\jarondu\Datasets\motionx\motionx\vector_263\HAA500\subset_0\000000.npy"
 
 
