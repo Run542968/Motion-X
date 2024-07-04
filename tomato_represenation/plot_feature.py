@@ -51,6 +51,7 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import mpl_toolkits.mplot3d.axes3d as p3
 from textwrap import wrap
 import imageio
+import argparse
 
 def recover_from_ric(data, joints_num):
     r_rot_quat, r_pos = recover_root_rot_pos(data)
@@ -148,8 +149,9 @@ def plot_3d_motion_smplh(joints, out_name, title, kinematic_chain, figsize=(10, 
         
         init()
         
-        ax.lines = []
-        ax.collections = []
+        # ax.lines = []
+        # ax.collections = []
+        ax.clear() # jaron-modify
         ax.view_init(elev=110, azim=-90)
         ax.dist = 7.5
         #         ax =
@@ -214,9 +216,15 @@ def draw_to_batch_smplh(smpl_joints_batch, kinematic_chain, title_batch=None, ou
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--example_path", type=str, default="./new_joints/humanml/000000.npy", help="the path to load data for visulization.")
+    parser.add_argument("--output_file", type=str, default="example_vis.gif", help="the name of outputed file.")
+    
+    opt = parser.parse_args()
+
+
     # load your own 623-dim vector file here
-    example_path = None
-    features = torch.from_numpy(np.load(example_path))
+    features = torch.from_numpy(np.load(opt.example_path))
     global_postion = recover_from_ric(features, 52).detach().cpu().numpy()
 
     hand_joints_id = [i for i in range(25,55)] # 2*3*5=30, left first, then right
@@ -232,4 +240,7 @@ if __name__ == '__main__':
     xyz = global_postion.reshape(1, -1, 52, 3)
 
     # feel free to change the output name
-    pose_vis = draw_to_batch_smplh(xyz, t2m_body_hand_kinematic_chain, title_batch=None, outname=[f'output.gif'])
+    pose_vis = draw_to_batch_smplh(xyz, t2m_body_hand_kinematic_chain, title_batch=None, outname=[f'{opt.output_file}'])
+
+# python plot_feature.py --example_path "D:\jarondu\Datasets\Motion_X_one\motion\motion_generation\new_joint_vecs\animation\animation\Ways_to_Catch_Baseball_Cap_clip1.npy"
+

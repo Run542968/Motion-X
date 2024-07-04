@@ -1,6 +1,6 @@
 
 
-
+import argparse
 import codecs as cs
 import pandas as pd
 import numpy as np
@@ -27,8 +27,6 @@ for pair in orig_flip_pairs:
     left_chain.append(pair[0])
     right_chain.append(pair[1])
 
-smplx_male_model_path = './smplx/SMPLX_MALE.npz'
-smplx_female_model_path = './smplx/SMPLX_FEMALE.npz'
 
 
 def swap_left_right(data):
@@ -172,33 +170,70 @@ def face_z_align(pose, smplx_model):
 
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--index_path", type=str, default="./humanml_index.csv", help="the path to index.csv")
+parser.add_argument("--data_dir", type=str, default="./amass_data", help="the directory that stores the downloaded data.")
+parser.add_argument("--save_dir", type=str, default="./humanml", help="the directory to save the processed data.")
+parser.add_argument("--smplx_dir", type=str, default="./body_models/smplx", help="the directory to save the processed data.")
 
 
 
 
 if __name__ == '__main__':
 
-    index_path = './humanml.csv'
-    save_dir = './humanml'
+    opt = parser.parse_args()
+
+    index_path = opt.index_path
+    data_dir = opt.data_dir
+    save_dir = opt.save_dir
+    os.makedirs(save_dir,exist_ok=True)
+    smplx_male_model_path = os.path.join(opt.smplx_dir, "SMPLX_MALE.npz")
+    smplx_female_model_path = os.path.join(opt.smplx_dir, "SMPLX_FEMALE.npz")
+
+    print(f"Start read the {index_path}.")
     index_file = pd.read_csv(index_path)
     total_amount = index_file.shape[0]
-    ex_fps = 30
+    print(f"The total_amount in {index_path} is {total_amount}.")
 
+
+
+    alias_table = {
+        'BioMotionLab_NTroje': 'BMLrub',
+        'DFaust_67': 'DFaust',
+        'MPI_HDM05': 'HDM05',
+        'MPI_mosh': 'MoSh',
+        'MPI_Limits': 'PosePrior',
+        'SSM_synced': 'SSM',
+        'TCD_handMocap': 'TCDHands',
+        'Transitions_mocap': 'Transitions'
+    }
+
+    ex_fps = 30
     bad_count = 0
 
     for i in tqdm(range(total_amount)):
-        
         try:
             source_path = index_file.loc[i]['source_path']
-            if 'humanact12' in source_path or 'BMLhandball' in source_path or '18_19_Justin' in source_path or '18_19_rory' in source_path or '20_21_Justin1' in source_path or '20_21_rory1' in source_path or '22_23_justin' in source_path or '22_23_Rory' in source_path:
+            if 'humanact12' in source_path \
+                or 'BMLhandball' in source_path \
+                or '18_19_Justin' in source_path \
+                or '18_19_rory' in source_path \
+                or '20_21_Justin1' in source_path \
+                or '20_21_rory1' in source_path \
+                or '22_23_justin' in source_path \
+                or '22_23_Rory' in source_path:
                 continue
-
-            source_path = source_path.replace('pose_data', 'amass_data')
-
             
+            split = source_path.split('/')
+            dataset_name = alias_table[split[2]] if split[2] in alias_table else split[2] # process alias
+            file_path = os.sep.join([dataset_name, dataset_name] + split[3:])
+            source_path = os.path.join(data_dir,file_path)
+
             source_path = source_path.replace('_poses.npy', '_stageii.npz')
             source_path = source_path.replace(' ', '_')
+
             data = np.load(source_path)
+
             gender = data['gender'].item()
 
             if gender == 'male':
@@ -215,16 +250,14 @@ if __name__ == '__main__':
             if 'humanact12' not in source_path:
                 if 'Eyes_Japan_Dataset' in source_path:
                     pose = pose[int(3*ex_fps):]
-                if 'MPI_HDM05' in source_path:
+                if 'HDM05' in source_path:
                     pose = pose[int(3*ex_fps):]
                 if 'TotalCapture' in source_path:
                     pose = pose[int(1*ex_fps):]
-                if 'MPI_Limits' in source_path:
+                if 'PosePrior' in source_path:
                     pose = pose[int(1*ex_fps):]
-                if 'Transitions_mocap' in source_path:
+                if 'Transitions' in source_path:
                     pose = pose[int(0.5*ex_fps):]
-
-                
 
                 pose = pose[int(start_frame*1.5):int(end_frame*1.5)]
             
@@ -236,11 +269,17 @@ if __name__ == '__main__':
             if pose is None:
                 bad_count += 1
             np.save(pjoin(save_dir, new_name), pose)
+            
             pose_mirror = swap_left_right(pose)
             np.save(pjoin(save_dir, 'M'+new_name), pose_mirror)
-            
-        except:
-            pass
+
+        except Exception as e:
+            print(f"Exception {e} happen.")
+            bad_count+=1
+
 
 
     print('bad_count: ', bad_count)
+
+
+# python humanml.py --data_dir "D:\\jarondu\\Datasets\\motion_X_two\\AMASS" --save_dir "D:\\jarondu\\Datasets\\motion_X_two\\humanml" --smplx_dir "../body_models/smplx"

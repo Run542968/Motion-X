@@ -46,8 +46,9 @@ import os.path as osp
 import pickle
 import torch
 import trimesh
+
 # Change your own model path
-HUMAN_MODEL_PATH = './body_models'
+HUMAN_MODEL_PATH = '../body_models'
 
 
 class SMPLX(object):

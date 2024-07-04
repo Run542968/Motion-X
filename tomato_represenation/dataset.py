@@ -51,9 +51,12 @@ def findAllFile(base):
     Returns:
         list: A list of file paths found in the directory and its subdirectories.
     """
+
     file_path = []
     for root, ds, fs in os.walk(base, followlinks=True):
         for f in fs:
+            if "zip" in f: # jaron-modify: 把除了.npy结尾的文件过滤掉，例如.zip
+                continue
             fullname = os.path.join(root, f)
             file_path.append(fullname)
     return file_path
@@ -61,6 +64,7 @@ def findAllFile(base):
 
 def collate_tensors(batch):
     # Function for collating a batch of PyTorch tensors
+    # padding collate operation
     dims = batch[0].dim()
     max_size = [max([b.size(i) for b in batch]) for i in range(dims)]
     size = (len(batch), ) + tuple(max_size)
@@ -75,7 +79,9 @@ def collate_tensors(batch):
 
 def mld_collate(batch):
     # Adapter function for collating batches in the MotionDatasetV2 class
+
     notnone_batches = [b for b in batch if b is not None]
+
     adapted_batch = {
         "motion":
         collate_tensors([torch.tensor(b[0]).float() for b in notnone_batches]),
@@ -102,15 +108,20 @@ class MotionDatasetV2(data.Dataset):
         if debug:
             self.id_list = self.id_list[:100]
 
+        self.invalid_data = [] # jaron-modify: add a list for record invalid data
         # Loading motion data from files and populating data and lengths lists
         for name in tqdm(self.id_list):
             motion = np.load(name)
-            self.lengths.append(motion.shape[0])
-            self.data.append({'motion': motion, 'name': name})
+            if len(motion.shape) != 2 or motion.shape[1] != 322: # jaron_modify: record
+                self.invalid_data.append({'motion': motion, 'name': name})
+            else:
+                self.lengths.append(motion.shape[0])
+                self.data.append({'motion': motion, 'name': name})
 
     def __len__(self):
         # Returns the number of items in the dataset
-        return len(self.id_list)
+        # return len(self.id_list)
+        return len(self.data) # jaron-modify: id_list contains data and invalid_data, not suitable
 
     def __getitem__(self, item):
         # Returns motion data, file name, and length for a given item

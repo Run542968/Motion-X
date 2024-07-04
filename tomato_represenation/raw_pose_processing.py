@@ -52,6 +52,7 @@ from tqdm import tqdm
 from smplx2joints import get_smplx_layer, process_smplx_322_data
 from dataset import MotionDatasetV2, mld_collate
 from torch.utils.data import DataLoader
+import argparse
 
 os.environ['PYOPENGL_PLATFORM'] = 'egl'
 comp_device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -70,18 +71,11 @@ def findAllFile(base):
     file_path = []
     for root, ds, fs in os.walk(base, followlinks=True):
         for f in fs:
+            if "zip" in f: # jaron-modify: 把除了.npy结尾的文件过滤掉，例如.zip
+                continue
             fullname = os.path.join(root, f)
             file_path.append(fullname)
     return file_path
-
-
-# Get SMPLX layer and model using a custom function get_smplx_layer
-smplx_layer, smplx_model = get_smplx_layer(comp_device)
-
-# change your path here with Motion-X SMPLX format with 322 dims
-train_dataset = MotionDatasetV2(root_path='motion_data/smplx_322', debug=False)
-train_loader = DataLoader(train_dataset, batch_size=8, drop_last=False,
-                          num_workers=4, shuffle=False, collate_fn=mld_collate)
 
 
 def amass_to_pose(src_motion, src_path, length):
@@ -110,19 +104,45 @@ def amass_to_pose(src_motion, src_path, length):
     # Iterate over frames to extract joint positions and save them to individual files
     for i in range(joints.shape[0]):
         joint = joints[i][:int(length[i])].detach().cpu().numpy()
+
         # change the save folder
-        save_path = src_path[i].replace('/smplx_322/', '/joint/')
+        save_path = src_path[i].replace('smplx322', 'joint') # jaron-modify: avoid the different of '/' and '\\' in linux and windows
         os.makedirs(os.path.split(save_path)[0], exist_ok=True)
         np.save(save_path, joint)
 
 
-# Iterate over batches in the training loader using tqdm for progress tracking
-for batch_data in tqdm(train_loader):
-    # Move motion data to the computation device (e.g., GPU)
-    motion = batch_data['motion'].to(comp_device)
-    name = batch_data['name']
-    length = batch_data['length']
 
-    # Call the 'amass_to_pose' function to convert SMPL-X motion data to pose representation
-    # and save joint positions for each batch
-    amass_to_pose(motion, name, length)
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir", type=str, default="./smplx322", help="the directory that stores the downloaded data.")
+    opt = parser.parse_args()
+
+
+    # Get SMPLX layer and model using a custom function get_smplx_layer
+    smplx_layer, smplx_model = get_smplx_layer(comp_device)
+    data_dir = opt.data_dir
+    
+
+    # change your path here with Motion-X SMPLX format with 322 dims
+    train_dataset = MotionDatasetV2(root_path=data_dir, debug=False)
+    train_loader = DataLoader(train_dataset, batch_size=2, drop_last=False,
+                            num_workers=4, shuffle=False, collate_fn=mld_collate)
+
+    # Iterate over batches in the training loader using tqdm for progress tracking
+    for batch_data in tqdm(train_loader):
+
+        # Move motion data to the computation device (e.g., GPU)
+        motion = batch_data['motion'].to(comp_device)
+        name = batch_data['name']
+        length = batch_data['length']
+
+        # Call the 'amass_to_pose' function to convert SMPL-X motion data to pose representation
+        # and save joint positions for each batch
+
+        amass_to_pose(motion, name, length)
+
+
+
+# python raw_pose_processing.py --data_dir "D:\\jarondu\\Datasets\\motion_X_two\\smplx322"
+
+# [item['name'].replace('D:\\jarondu\\Datasets\\Motion_X_one\\motion\\motion_generation\\smplx322','') for item in train_dataset.invalid_data]

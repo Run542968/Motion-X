@@ -52,7 +52,7 @@ from textwrap import wrap
 import imageio
 from tqdm import tqdm
 import os
-
+import argparse
 
 def findAllFile(base):
     """
@@ -259,8 +259,9 @@ def plot_3d_motion_smplh(joints, out_name, title, kinematic_chain, figsize=(10, 
 
         init()
 
-        ax.lines = []
-        ax.collections = []
+        # ax.lines = []
+        # ax.collections = []
+        ax.clear() # jaron-modify
         ax.view_init(elev=110, azim=-90)
         ax.dist = 7.5
 
@@ -357,9 +358,13 @@ def draw_to_batch_smplh_folder(kinematic_chain, input_folder):
 
 if __name__ == '__main__':
     # Visualize your final data, please define your example_path, like 'new_data_humanml_000067_joints_using_smplx_rotation.npy'
-    example_path = None
-    assert example_path != None
-    joints = np.load(example)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--example_path", type=str, default="./new_joints/humanml/000000.npy", help="the path to load data for visulization.")
+    parser.add_argument("--output_file", type=str, default="example_vis.gif", help="the name of outputed file.")
+    
+    opt = parser.parse_args()
+
+    joints = np.load(opt.example_path)
 
     # 2*3*5=30, left first, then right
     hand_joints_id = [i for i in range(25, 55)]
@@ -378,5 +383,8 @@ if __name__ == '__main__':
     if joints.shape[1] != 52:
         joints = joints[:, body_joints_id+hand_joints_id, :]
     xyz = joints.reshape(1, -1, 52, 3)
-    pose_vis = draw_to_batch_smplh(xyz, t2m_body_hand_kinematic_chain, title_batch=None, outname=[
-                                   f'output.gif'])
+    pose_vis = draw_to_batch_smplh(xyz, t2m_body_hand_kinematic_chain, title_batch=None, outname=[f'{opt.output_file}'])
+
+
+# python plot_3d_global.py --example_path "D:\\jarondu\\Datasets\\Motion_X_one\\motion\\motion_generation\\new_joints\\haa500\\abseiling_1_clip1.npy"
+

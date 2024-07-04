@@ -8,7 +8,7 @@ This instruction is for creating the Motion Representation with the [Tomato](htt
 <details>
 <summary>Download SMPL+H, SMPLX, DMPLs.</summary>
 
-Download SMPL+H mode from [SMPL+H](https://mano.is.tue.mpg.de/download.php) (choose Extended SMPL+H model used in the AMASS project), DMPL model from [DMPL](https://smpl.is.tue.mpg.de/download.php) (choose DMPLs compatible with SMPL), and SMPL-X model from [SMPL-X](https://smpl-x.is.tue.mpg.de/download.php). Then, please place all the models under `./body_model/`. The `./body_model/` folder tree should be:
+Download SMPL+H mode from [SMPL+H](https://mano.is.tue.mpg.de/download.php) (choose Extended SMPL+H model used in the AMASS project), DMPL model from [DMPL](https://smpl.is.tue.mpg.de/download.php) (choose DMPLs compatible with SMPL), and SMPL-X model from [SMPLer-X](https://huggingface.co/camenduru/SMPLer-X/tree/main). Then, please place all the models under `./body_model/`. The `./body_model/` folder tree should be:
 
 ```bash
 ./body_models
@@ -28,15 +28,15 @@ Download SMPL+H mode from [SMPL+H](https://mano.is.tue.mpg.de/download.php) (c
 │   └── neutral
 │       └── model.npz
 ├── smplx
-│   ├── female
-│   │   ├── model.npz
-│   │   └── model.pkl
-│   ├── male
-│   │   ├── model.npz
-│   │   └── model.pkl
-│   └── neutral
-│       ├── model.npz
-└───────└── model.pkl
+│   ├── SMPL-X_FLAME_vertex_ids.npy
+│   ├── SMPLX_TO_J14.pkl
+│   ├── MANO_SMPLX_vertex_ids.pkl
+│   ├── SMPLX_FEMALE.npz
+│   ├── SMPLX_FEMALE.pkl
+│   ├── SMPLX_MALE.npz
+│   ├── SMPLX_MALE.pkl
+│   ├── SMPLX_NEUTRAL.npz
+│   ├── SMPLX_NEUTRAL.pkl
 ```
 
 </details>

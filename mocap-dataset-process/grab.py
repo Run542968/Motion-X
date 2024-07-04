@@ -8,7 +8,7 @@ from smplx import SMPLX
 from utils.face_z_align_util import joint_idx, face_z_transform
 import re
 from tqdm import tqdm
-
+import argparse
 
 
 
@@ -27,6 +27,8 @@ def findAllFile(base):
     file_path = []
     for root, ds, fs in os.walk(base, followlinks=True):
         for f in fs:
+            if "zip" in f: # jaron-modify: 把除了.npy结尾的文件过滤掉，例如.zip
+                continue
             fullname = os.path.join(root, f)
             file_path.append(fullname)
     return file_path
@@ -34,13 +36,9 @@ def findAllFile(base):
 
 
 def transform_motions(data):
-
     ex_fps = 30
-
     fps = 120
-
     down_sample = int(fps / ex_fps)
-
 
     frame_number = data['body']['params']['transl'].shape[0]
     
@@ -91,10 +89,15 @@ def process_text(text):
     result = re.sub(r'\s+', ' ', result)
     return result
 
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--data_dir", type=str, default="./GRAB", help="the directory that stores the downloaded data.")
+
 if __name__ == '__main__':
+    opt = parser.parse_args()
+    data_dir = opt.data_dir
 
-
-    for case_path in tqdm(findAllFile('./GRAB')):
+    for case_path in tqdm(findAllFile(data_dir)):
         data = np.load(case_path, allow_pickle=True)
         data = {k: data[k].item() for k in data.files}
 
@@ -105,6 +108,7 @@ if __name__ == '__main__':
 
         output_motion_path = case_path.replace('GRAB', 'GRAB_motion').replace('.npz', '.npy')
         output_text_path = case_path.replace('GRAB', 'GRAB_text').replace('.npz', '.txt')
+
         create_parent_dir(output_motion_path)
         create_parent_dir(output_text_path)
         np.save(output_motion_path, data)
@@ -112,3 +116,6 @@ if __name__ == '__main__':
             f.write(text)
 
         
+
+
+# python grab.py --data_dir "D:\\jarondu\\Datasets\\motion_X_two\\GRAB"

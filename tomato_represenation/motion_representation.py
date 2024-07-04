@@ -52,7 +52,7 @@ from paramUtil import *
 import torch
 from tqdm import tqdm
 import os
-
+import argparse
 
 def findAllFile(base):
     """
@@ -446,8 +446,13 @@ if __name__ == "__main__":
     - Recovered joint positions are saved in the 'new_joints' directory.
     - Original joint vectors are saved in the 'new_joint_vecs' directory.
     """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data_dir", type=str, default="./joint", help="the directory that stores the downloaded data.")
+    parser.add_argument("--example_file", type=str, default="./joint/humanml/000021.npy", help="the path to load the example data.")
+    opt = parser.parse_args()
 
-    example_id = "000021"
+
+
     # Lower legs
     l_idx1, l_idx2 = 5, 8
     # Right/Left foot
@@ -465,21 +470,15 @@ if __name__ == "__main__":
     # ds_num = 8
 
     # change your motion_data joint
-    data_dir = 'motion_data/joint'
-    # change your save folder
-    save_dir1 = 'motion_data/new_joints/'
-    # change your save folder
-    save_dir2 = 'motion_data/new_joint_vecs/'
-
-    os.makedirs(save_dir1, exist_ok=True)
-    os.makedirs(save_dir2, exist_ok=True)
+    data_dir = opt.data_dir
+    # replace_word = data_dir.split(os.path.sep)[-1]
 
     n_raw_offsets = torch.from_numpy(t2m_raw_offsets)
     kinematic_chain = t2m_body_hand_kinematic_chain
 
     # Get offsets of target skeleton
     # we random choose one
-    example_data = np.load('motion_data/joint/humanml/000021.npy')
+    example_data = np.load(opt.example_file)
     example_data = example_data[:, body_joints_id + hand_joints_id, :]
     example_data = example_data.reshape(len(example_data), -1, 3)
     example_data = torch.from_numpy(example_data)
@@ -496,22 +495,21 @@ if __name__ == "__main__":
 
         source_data = np.load(source_file)[:, body_joints_id+hand_joints_id, :]
         try:
-            data, ground_positions, positions, l_velocity = process_file(
-                source_data, 0.002)
-            rec_ric_data = recover_from_ric(torch.from_numpy(
-                data).unsqueeze(0).float(), joints_num)
+            data, ground_positions, positions, l_velocity = process_file(source_data, 0.002)
+            rec_ric_data = recover_from_ric(torch.from_numpy(data).unsqueeze(0).float(), joints_num)
 
-            os.makedirs(os.path.split(source_file.replace(
-                'joint', 'new_joints'))[0], exist_ok=True)
-            os.makedirs(os.path.split(source_file.replace(
-                'joint', 'new_joint_vecs'))[0], exist_ok=True)
-            np.save(source_file.replace('joint', 'new_joints'),
-                    rec_ric_data.squeeze().numpy())
+            os.makedirs(os.path.split(source_file.replace('joint', 'new_joints'))[0], exist_ok=True)
+            os.makedirs(os.path.split(source_file.replace('joint', 'new_joint_vecs'))[0], exist_ok=True)
+            np.save(source_file.replace('joint', 'new_joints'),rec_ric_data.squeeze().numpy())
             np.save(source_file.replace('joint', 'new_joint_vecs'), data)
             frame_num += data.shape[0]
         except Exception as e:
-            print(source_file)
-            print(e)
+            print(f"{source_file} meet {e}")
+            
 
-    print('Total clips: %d, Frames: %d, Duration: %fm' %
-          (len(source_list), frame_num, frame_num / 20 / 60))
+    print('Total clips: %d, Frames: %d, Duration: %fm' % (len(source_list), frame_num, frame_num / 20 / 60))
+
+
+
+# python motion_representation.py --data_dir "D:\jarondu\Datasets\Motion_X_one\motion\motion_generation\joint" --example_file "D:\jarondu\Datasets\Motion_X_one\motion\motion_generation\joint\humanml\000021.npy"
+

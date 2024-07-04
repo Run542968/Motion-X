@@ -8,6 +8,7 @@ from smplx import SMPLX
 from utils.face_z_align_util import joint_idx, face_z_transform
 import re
 from tqdm import tqdm
+import argparse
 
 smplx_model_path = './body_models/smplx/SMPLX_NEUTRAL.npz'
 smplx_model = SMPLX(smplx_model_path, num_betas=10, use_pca=False, use_face_contour=True, batch_size=1).cuda()
@@ -132,27 +133,33 @@ def process_text(text):
 
 
 
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--index_path", type=str, default="./egobody_description_all.csv", help="the path to index.csv")
+    parser.add_argument("--data_dir", type=str, default="./EgoBody", help="the directory that stores the downloaded data.")
+    opt = parser.parse_args()
 
-    index_path = './egobody_description_all.csv'
+    index_path = opt.index_path
     index_file = pd.read_csv(index_path)
+    data_dir = opt.data_dir
 
-    wear_file_list_test_path = './EgoBody/smplx_camera_wearer_test'
+    wear_file_list_test_path = os.path.join(data_dir, 'smplx_camera_wearer_test')
     wear_file_list_test = [os.path.join(wear_file_list_test_path, i) for i in os.listdir(wear_file_list_test_path)]
 
-    wear_file_list_train_path = './EgoBody/smplx_camera_wearer_train'
+    wear_file_list_train_path = os.path.join(data_dir, 'smplx_camera_wearer_train')
     wear_file_list_train = [os.path.join(wear_file_list_train_path, i) for i in os.listdir(wear_file_list_train_path)]
 
-    wear_file_list_val_path = './EgoBody/smplx_camera_wearer_val'
+    wear_file_list_val_path = os.path.join(data_dir, 'smplx_camera_wearer_val')
     wear_file_list_val = [os.path.join(wear_file_list_val_path, i) for i in os.listdir(wear_file_list_val_path)]
 
-    interactee_file_train_path = './EgoBody/smplx_interactee_train'
+    interactee_file_train_path = os.path.join(data_dir, 'smplx_interactee_train')
     interactee_file_list_train = [os.path.join(interactee_file_train_path, i) for i in os.listdir(interactee_file_train_path)]
 
-    interactee_file_val_path = './EgoBody/smplx_interactee_val'
+    interactee_file_val_path = os.path.join(data_dir, 'smplx_interactee_val')
     interactee_file_list_val = [os.path.join(interactee_file_val_path, i) for i in os.listdir(interactee_file_val_path)]
 
-    interactee_file_test_path = './EgoBody/smplx_interactee_test'
+    interactee_file_test_path = os.path.join(data_dir, 'smplx_interactee_test')
     interactee_file_list_test = [os.path.join(interactee_file_test_path, i) for i in os.listdir(interactee_file_test_path)]
 
     wear_dict = {}
@@ -201,3 +208,6 @@ if __name__ == '__main__':
 
         with open(save_txt_path, 'w') as f:
             f.write(text_description)
+
+
+# python egobody.py --data_dir "D:\\jarondu\\Datasets\\motion_X_two\\EgoBody"
