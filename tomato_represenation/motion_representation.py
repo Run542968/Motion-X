@@ -511,5 +511,5 @@ if __name__ == "__main__":
 
 
 
-# python motion_representation.py --data_dir "D:\jarondu\Datasets\Motion_X_one\motion\motion_generation\joint" --example_file "D:\jarondu\Datasets\Motion_X_one\motion\motion_generation\joint\humanml\000021.npy"
+# python motion_representation.py --data_dir "D:\jarondu\Datasets\Motion_X_one\motion\test_joint" --example_file "D:\jarondu\Datasets\Motion_X_one\motion\motion_generation\joint\humanml\000021.npy"
 

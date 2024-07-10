@@ -383,8 +383,13 @@ if __name__ == '__main__':
     if joints.shape[1] != 52:
         joints = joints[:, body_joints_id+hand_joints_id, :]
     xyz = joints.reshape(1, -1, 52, 3)
+    
+    
     pose_vis = draw_to_batch_smplh(xyz, t2m_body_hand_kinematic_chain, title_batch=None, outname=[f'{opt.output_file}'])
 
 
-# python plot_3d_global.py --example_path "D:\\jarondu\\Datasets\\Motion_X_one\\motion\\motion_generation\\new_joints\\haa500\\abseiling_1_clip1.npy"
+
+# python plot_3d_global.py --example_path "D:\jarondu\Datasets\Motion_X_one\motion\motion_generation\new_joints\animation\Ways_to_Catch_360_clip1.npy"
+
+
 

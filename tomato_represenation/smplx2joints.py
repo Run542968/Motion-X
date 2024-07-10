@@ -242,26 +242,50 @@ def process_smplx_322_data(smplx_data, smplx_layer, smplx_model, device, face_ca
     assert pose.shape[-1] == 322
     assert len(pose.shape) == 3
 
-    use_flame = (pose.shape[-1] == 322)
+    use_flame = (pose.shape[-1] == 322) # True
     # cfg.set_additional_args(use_flame=use_flame, modify_root_joint=False)
 
     batch_size = pose.shape[0]
     num_frames = pose.shape[1]
 
-    zero_pose = torch.zeros((batch_size, num_frames, 3)
-                            ).float().to(device)  # eye poses
-    zero_expr = torch.zeros((batch_size, num_frames, 10)).float().to(
-        device)  # smplx face expression
+    zero_pose = torch.zeros((batch_size, num_frames, 3)).float().to(device)  # eye poses
+    zero_expr = torch.zeros((batch_size, num_frames, 10)).float().to(device)  # smplx face expression
 
     # concat poses
     pose = pose.reshape(batch_size*num_frames, 322)
-    zero_pose = zero_pose.reshape(batch_size*num_frames, -1)
+    zero_pose = zero_pose.reshape(batch_size*num_frames, -1) 
     zero_expr = zero_expr.reshape(batch_size*num_frames, -1)
 
     if face_carnical:
         neck_idx = 12
         pose[..., neck_idx*3:(neck_idx+1)*3] = zero_pose
         pose[..., :3] = 0
+
+    assert 1==2, 'Please confirm whether to enable the codes below, if not, please comment it.'
+    # -------------------- # 
+    '''
+    Just for the sub-set from the motion-X google drive: `animation`，`haa500`, `humman`, `idea400`, `kungfu`, `music`, `perform`
+    '''
+    from scipy.spatial.transform import Rotation as R
+    init_aa = pose[0,:3].cpu().numpy()
+    init_rot = R.from_rotvec(init_aa)
+    init_rot_matrix = init_rot.as_matrix()
+
+    # tgt_aa = [-1.57,0,0] # 从世界坐标系基底沿着x轴逆向旋转180度作为目标
+    # tgt_aa = [-0.785,0,0] # 从世界坐标系基底沿着x轴逆向旋转90度作为目标
+    tgt_aa = [0,0,0] # 从世界坐标系基地作为目标
+    tgt_rot = R.from_rotvec(tgt_aa)
+    tgt_rot_matrix = tgt_rot.as_matrix()
+
+    conversion_matrix = tgt_rot_matrix @ np.linalg.inv(init_rot_matrix)
+
+    source_rot = R.from_rotvec(pose[...,:3].cpu().numpy())
+    source_rot_matrix = source_rot.as_matrix()
+    new_rot_matrix = conversion_matrix @ source_rot_matrix
+    new_aa = R.from_matrix(new_rot_matrix).as_rotvec()
+    
+    pose[...,:3] = torch.from_numpy(new_aa).cuda() # jaron-temp:
+    # -------------------- # 
 
     if use_flame:
         # 322
@@ -313,8 +337,7 @@ def process_smplx_322_data(smplx_data, smplx_layer, smplx_model, device, face_ca
 
     if use_flame:
         output = smplx_layer(betas=body_parms['betas'], body_pose=body_parms['pose_body'], global_orient=body_parms['root_orient'],
-                             left_hand_pose=body_parms['pose_hand'][...,
-                                                                    :45], right_hand_pose=body_parms['pose_hand'][..., 45:],
+                             left_hand_pose=body_parms['pose_hand'][...,:45], right_hand_pose=body_parms['pose_hand'][..., 45:],
                              jaw_pose=body_parms['pose_jaw'], leye_pose=zero_pose, reye_pose=zero_pose, transl=body_parms['trans'],
                              expression=zero_expr, flame_betas=body_parms['face_shape'], flame_expression=body_parms['face_expr'])
         #
@@ -329,7 +352,7 @@ def process_smplx_322_data(smplx_data, smplx_layer, smplx_model, device, face_ca
         output = smplx_layer(betas=body_parms['betas'], body_pose=body_parms['pose_body'], global_orient=body_parms['root_orient'],
                              left_hand_pose=body_parms['pose_hand'][...,
                                                                     :45], right_hand_pose=body_parms['pose_hand'][..., 45:],
-                             jaw_pose=body_parms['pose_jaw'], leye_pose=zero_pose, reye_pose=zero_pose, expression=zeor_expr,
+                             jaw_pose=body_parms['pose_jaw'], leye_pose=zero_pose, reye_pose=zero_pose, expression=zero_expr,
                              transl=body_parms['trans'])
 
     del zero_pose
@@ -337,8 +360,7 @@ def process_smplx_322_data(smplx_data, smplx_layer, smplx_model, device, face_ca
 
     vertices = output.vertices.reshape(batch_size, num_frames, 10475, 3)
     # import pdb; pdb.set_trace()
-    joints = output.joints[:, smplx_model.joint_idx, :].reshape(
-        batch_size, num_frames, len(smplx_model.joint_idx), 3)
+    joints = output.joints[:, smplx_model.joint_idx, :].reshape(batch_size, num_frames, len(smplx_model.joint_idx), 3)
     faces = smplx_model.face
 
     # import pdb; pdb.set_trace()

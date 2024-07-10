@@ -143,6 +143,6 @@ if __name__ == "__main__":
 
 
 
-# python raw_pose_processing.py --data_dir "D:\\jarondu\\Datasets\\motion_X_two\\smplx322"
+# python raw_pose_processing.py --data_dir "D:\\jarondu\\Datasets\\Motion_X_one\\motion\\test_smplx322"
 
 # [item['name'].replace('D:\\jarondu\\Datasets\\Motion_X_one\\motion\\motion_generation\\smplx322','') for item in train_dataset.invalid_data]

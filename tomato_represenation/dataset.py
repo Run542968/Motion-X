@@ -117,6 +117,7 @@ class MotionDatasetV2(data.Dataset):
             else:
                 self.lengths.append(motion.shape[0])
                 self.data.append({'motion': motion, 'name': name})
+        print(f"There are total {len(self.id_list)} files in {root_path}, but {len(self.invalid_data)} files are invalid.")
 
     def __len__(self):
         # Returns the number of items in the dataset
