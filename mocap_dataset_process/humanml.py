@@ -153,7 +153,7 @@ def face_z_align(pose, smplx_model):
     smplx_output = smplx_model(betas=param['betas'], body_pose=param['pose_body'],
                                global_orient=param['root_orient'], pose2rot=True, jaw_pose=zero_pose, leye_pose=zero_pose, reye_pose=zero_pose,
                                left_hand_pose=param['pose_hand'][:, :45], right_hand_pose=param['pose_hand'][:, 45:],
-                               expression=param['face_expr'][:, :10], transl=param['trans'])
+                               expression=param['face_expr'][:, :10], transl=param['trans']) # jaron: 这里加载smplx_model的目的是得到joints，然后对它选择+位移，使得角色是面朝z轴（处于原点）
                         
     vertices = smplx_output.vertices
     joints = smplx_output.joints
